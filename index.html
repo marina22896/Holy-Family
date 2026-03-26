@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>WebAR — Custom Image + Video</title>
+  <title>WebAR — Custom Image + Video with Audio</title>
   <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <!-- MindAR -->
@@ -11,9 +11,20 @@
   <style>
     body, html { margin: 0; height: 100%; }
     #container { width: 100%; height: 100vh; overflow: hidden; }
+    #play-audio-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
+  <!-- Button to trigger audio -->
+  <button id="play-audio-btn">Play Audio</button>
+
   <div id="container">
     <a-scene 
       mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no"
@@ -25,11 +36,13 @@
 
       <!-- Preload assets -->
       <a-assets>
-        <!-- Replace with your own target image (used only for preview / debugging, not tracking) -->
         <img id="targetImage" src="./targets.jpeg" />
 
-        <!-- Your video (must be muted to autoplay) -->
-        <video id="myVideo" src="./video.mp4" loop playsinline webkit-playsinline crossorigin="anonymous" style="display:none"></video>
+        <!-- Video for visuals (muted required for autoplay) -->
+        <video id="myVideo" src="./video.mp4" loop muted playsinline webkit-playsinline crossorigin="anonymous" style="display:none"></video>
+
+        <!-- Audio track for sound -->
+        <audio id="myAudio" src="./video.mp4" loop></audio>
       </a-assets>
 
       <!-- Camera -->
@@ -46,32 +59,38 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const video = document.getElementById('myVideo');
+      const video = document.getElementById('myVideo'); // Visual video
+      const audio = document.getElementById('myAudio'); // Audio track
       const target = document.querySelector('[mindar-image-target]');
+      const playAudioBtn = document.getElementById('play-audio-btn');
 
-      target.addEventListener('targetFound', async () => {
+      // Start audio when user taps button
+      playAudioBtn.addEventListener('click', async () => {
         try {
-          await video.play();
-        } catch (err) {
-          console.warn('Autoplay blocked. Consider adding a play button.', err);
+          await audio.play(); // Audio will start
+          playAudioBtn.style.display = 'none'; // Hide button after tap
+        } catch(err) {
+          console.error('Error playing audio:', err);
         }
       });
 
+      // Video autoplay (muted) when target found
+      target.addEventListener('targetFound', async () => {
+        try {
+          await video.play();
+        } catch(err) {
+          console.warn('Autoplay blocked. Video visuals may not start automatically.', err);
+        }
+      });
+
+      // Pause video/audio when target lost
       target.addEventListener('targetLost', () => {
         video.pause();
         video.currentTime = 0;
+        audio.pause();
+        audio.currentTime = 0;
       });
     });
   </script>
-
-  <!--
-    Instructions:
-    1. Replace ./myImage.jpg with your reference image.
-    2. Generate ./myTarget.mind from that image using mindarjs tools:
-       npm i -g mindarjs-image-target-tools
-       mindarjs-tg ./myImage.jpg --outputDir ./
-    3. Replace ./ideo.mp4 with your own video.
-    4. Host everything on HTTPS and test on mobile.
-  -->
 </body>
 </html>
