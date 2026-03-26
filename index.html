@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>WebAR — Custom Image + Video with Audio</title>
+  <title>WebAR — Video with Audio</title>
   <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <!-- MindAR -->
@@ -11,20 +11,9 @@
   <style>
     body, html { margin: 0; height: 100%; }
     #container { width: 100%; height: 100vh; overflow: hidden; }
-    #play-audio-btn {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 100;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
   </style>
 </head>
 <body>
-  <!-- Button to trigger audio -->
-  <button id="play-audio-btn">Play Audio</button>
-
   <div id="container">
     <a-scene 
       mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; uiLoading: no; uiScanning: no; uiError: no"
@@ -37,12 +26,10 @@
       <!-- Preload assets -->
       <a-assets>
         <img id="targetImage" src="./targets.jpeg" />
-
         <!-- Video for visuals (muted required for autoplay) -->
         <video id="myVideo" src="./video.mp4" loop muted playsinline webkit-playsinline crossorigin="anonymous" style="display:none"></video>
-
-        <!-- Audio track for sound -->
-        <audio id="myAudio" src="./video.mp4" loop></audio>
+        <!-- Separate audio track for sound -->
+        <audio id="myAudio" src="./video-audio.mp3" loop></audio>
       </a-assets>
 
       <!-- Camera -->
@@ -59,31 +46,33 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const video = document.getElementById('myVideo'); // Visual video
+      const video = document.getElementById('myVideo'); // Video visuals
       const audio = document.getElementById('myAudio'); // Audio track
       const target = document.querySelector('[mindar-image-target]');
-      const playAudioBtn = document.getElementById('play-audio-btn');
+      let audioStarted = false;
 
-      // Start audio when user taps button
-      playAudioBtn.addEventListener('click', async () => {
-        try {
-          await audio.play(); // Audio will start
-          playAudioBtn.style.display = 'none'; // Hide button after tap
-        } catch(err) {
-          console.error('Error playing audio:', err);
+      // Start audio on first tap anywhere
+      document.body.addEventListener('click', async () => {
+        if (!audioStarted) {
+          try {
+            await audio.play();
+            audioStarted = true;
+          } catch(err) {
+            console.error('Error playing audio:', err);
+          }
         }
-      });
+      }, { once: true });
 
-      // Video autoplay (muted) when target found
+      // Play video (muted) automatically when AR target is found
       target.addEventListener('targetFound', async () => {
         try {
           await video.play();
         } catch(err) {
-          console.warn('Autoplay blocked. Video visuals may not start automatically.', err);
+          console.warn('Autoplay blocked for visuals.', err);
         }
       });
 
-      // Pause video/audio when target lost
+      // Pause video and audio when target is lost
       target.addEventListener('targetLost', () => {
         video.pause();
         video.currentTime = 0;
@@ -93,4 +82,5 @@
     });
   </script>
 </body>
+</html>
 </html>
